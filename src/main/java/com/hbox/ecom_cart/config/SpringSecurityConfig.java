@@ -1,0 +1,173 @@
+package com.hbox.ecom_cart.config;
+
+import com.hbox.ecom_cart.exception.EcomCartException;
+import com.hbox.ecom_cart.security.JwtAuthenticationEntryPoint;
+import com.hbox.ecom_cart.security.JwtAuthenticationFilter;
+import com.hbox.ecom_cart.security.JwtTokenProvider;
+import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.function.Supplier;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@AllArgsConstructor
+public class SpringSecurityConfig {
+
+    private JwtTokenProvider jwtTokenProvider;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint authenticationEntryPoint,
+                                            CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
+
+        http.csrf().disable()
+                .authorizeHttpRequests((authorize) ->
+                {
+                    // POST Request to register/login -> Any Role/Authority
+                    authorize.requestMatchers(HttpMethod.POST, "api/e-com-cart/users/**").permitAll();
+
+                    // GET Request to fetch all the users -> Role_ADMIN
+                    authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/users").hasAuthority("ROLE_ADMIN");
+
+                    // GET Request Based on Id -> ROLE_ADMIN can get details of any user, ROLE_CUSTOMER can get details of itself
+                    authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/users/**")
+                                    .access(this::isAdminOrSelf);
+
+                    // PUT Request Based on Id -> Any ROLE can update details of itself only
+                    authorize.requestMatchers(HttpMethod.PUT, "/api/e-com-cart/users/**")
+                                    .access(this::isSelf);
+
+                    // DELETE Request Based on Id -> Any Role can delete itself only
+                    authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/users/**")
+                                    .access(this::isSelf);
+
+                    authorize.anyRequest().authenticated();
+                }
+                )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .exceptionHandling(exception -> exception.accessDeniedHandler(customAccessDeniedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    // Provide API Request access to both ADMIN and CUSTOMER - based on their Id
+    private AuthorizationDecision isAdminOrSelf(Supplier<Authentication> auth, RequestAuthorizationContext request)
+    {
+        String  token = request.getRequest().getHeader("Authorization");
+        System.out.println("Token: " + token);
+
+        if(token == null || !token.startsWith("Bearer"))
+        {
+            return new AuthorizationDecision(false);
+        }
+        token = token.replace("Bearer ", "");
+        System.out.println("Token: " + token);
+
+        Authentication authentication = auth.get();
+        Long loggedInUserId = jwtTokenProvider.getUserIdFromToken(token);
+        String[] uriPath = request.getRequest().getRequestURI().split("/");
+        System.out.println("Logged In UserId: " + loggedInUserId);
+
+        if(uriPath.length < 5)
+        {
+            return new AuthorizationDecision(false);
+        }
+
+        Long requestedUserId;
+        try {
+            requestedUserId = Long.parseLong(uriPath[4]);
+            System.out.println("Requested UserId: " + requestedUserId);
+        }
+        catch(NumberFormatException e)
+        {
+            return new AuthorizationDecision(false);
+        }
+
+        boolean isAuthorized = authentication.getAuthorities().stream().anyMatch(
+                authority -> authority.getAuthority().equals("ROLE_ADMIN")
+                        || authority.getAuthority().equals("ROLE_CUSTOMER")
+                        && loggedInUserId.equals(requestedUserId));
+
+        if(!isAuthorized)
+        {
+            return new AuthorizationDecision(false);
+        }
+        return new AuthorizationDecision(true);
+    }
+
+    // Provide API Request access to individual role - ADMIN or CUSTOMER - based on their Id
+    private AuthorizationDecision isSelf(Supplier<Authentication> auth, RequestAuthorizationContext request)
+    {
+        String[] uriPath = request.getRequest().getRequestURI().split("/");
+        if(uriPath.length < 5)
+        {
+            return new AuthorizationDecision(false);
+        }
+        Long requestedUserId = getRequestedUserIdFromRequestURI(request.getRequest().getRequestURI());
+
+        if(requestedUserId == null)
+        {
+            return new AuthorizationDecision(false);
+        }
+
+        Long loggedInUserId = getLoggedInUserIdFromToken(request.getRequest().getHeader("Authorization"));
+        if(loggedInUserId == null)
+        {
+            return new AuthorizationDecision(false);
+        }
+        boolean isAuthorized = requestedUserId.equals(loggedInUserId);
+        return new AuthorizationDecision(isAuthorized);
+    }
+
+    private Long getRequestedUserIdFromRequestURI(String uriPath)
+    {
+        return Long.parseLong(uriPath.split("/")[4]);
+    }
+
+    private Long getLoggedInUserIdFromToken(String authorizationHeader)
+    {
+        if(authorizationHeader == null || !authorizationHeader.startsWith("Bearer "))
+        {
+            throw  new EcomCartException(HttpStatus.UNAUTHORIZED, "Invalid Authorization");
+        }
+        String token = authorizationHeader.replace("Bearer ", "");
+
+        return jwtTokenProvider.getUserIdFromToken(token);
+    }
+}
