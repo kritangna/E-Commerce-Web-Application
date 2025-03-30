@@ -1,5 +1,7 @@
 package com.hbox.ecom_cart;
 
+import com.hbox.ecom_cart.dto.ProductDto;
+import com.hbox.ecom_cart.entity.Product;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,7 +13,10 @@ public class EcomCartApplication {
 	@Bean
 	public ModelMapper modelMapper()
 	{
-		return new ModelMapper();
+		ModelMapper modelMapper = new ModelMapper();
+		modelMapper.typeMap(Product.class, ProductDto.class).addMappings((mapper) ->
+				mapper.map((productCategory) -> productCategory.getCategory(), ProductDto::setCategoryDto));
+		return modelMapper;
 	}
 
 	public static void main(String[] args) {

@@ -19,7 +19,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -57,6 +56,8 @@ public class SpringSecurityConfig {
         http.csrf().disable()
                 .authorizeHttpRequests((authorize) ->
                 {
+                    //************* Authorizing Requests for accessing Users ***************//
+
                     // POST Request to register/login -> Any Role/Authority
                     authorize.requestMatchers(HttpMethod.POST, "api/e-com-cart/users/**").permitAll();
 
@@ -75,9 +76,43 @@ public class SpringSecurityConfig {
                     authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/users/**")
                                     .access(this::isSelf);
 
+                    //************* Authorizing Requests for accessing Products ***************//
+
+                    // POST Request to add Products
+                    authorize.requestMatchers(HttpMethod.POST, "/api/e-com-cart/products").hasAuthority("ROLE_ADMIN");
+
+                    // GET Request to get a Product by ID
+                    authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/products/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_CUSTOMER");
+
+                    // GET Request to get all Products
+                    authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/products").hasAnyAuthority("ROLE_ADMIN", "ROLE_CUSTOMER");
+
+                    // PUT Request to update th product
+                    authorize.requestMatchers(HttpMethod.PUT, "/api/e-com-cart/products/**").hasAuthority("ROLE_ADMIN");
+
+                    // DELETE Request to delete a product
+                    authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/products/**").hasAuthority("ROLE_ADMIN");
+
+
+                    //************* Authorizing Requests for accessing Categories ***************//
+
+                    // POST Request to add Categories
+                    authorize.requestMatchers(HttpMethod.POST, "/api/e-com-cart/categories").hasAuthority("ROLE_ADMIN");
+
+                    // GET Request to get a Categories by ID
+                    authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/categories/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_CUSTOMER");
+
+                    // GET Request to get all Categories
+                    authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/categories").hasAnyAuthority("ROLE_ADMIN", "ROLE_CUSTOMER");
+
+                    // PUT Request to update the Category by ID
+                    authorize.requestMatchers(HttpMethod.PUT, "/api/e-com-cart/categories/**").hasAuthority("ROLE_ADMIN");
+
+                    // DELETE Request to delete a Category
+                    authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/categories/**").hasAuthority("ROLE_ADMIN");
+
                     authorize.anyRequest().authenticated();
-                }
-                )
+                })
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .exceptionHandling(exception -> exception.accessDeniedHandler(customAccessDeniedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
