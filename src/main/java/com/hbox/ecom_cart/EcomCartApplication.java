@@ -1,7 +1,10 @@
 package com.hbox.ecom_cart;
 
+import com.hbox.ecom_cart.dto.OrderDto;
 import com.hbox.ecom_cart.dto.ProductDto;
+import com.hbox.ecom_cart.entity.Order;
 import com.hbox.ecom_cart.entity.Product;
+import com.hbox.ecom_cart.repositoty.OrderItemRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 public class EcomCartApplication {
 
 	@Bean
-	public ModelMapper modelMapper()
+	public ModelMapper modelMapper(OrderItemRepository orderItemRepository)
 	{
 		ModelMapper modelMapper = new ModelMapper();
 		modelMapper.typeMap(Product.class, ProductDto.class).addMappings((mapper) ->

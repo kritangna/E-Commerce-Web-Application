@@ -76,6 +76,7 @@ public class SpringSecurityConfig {
                     authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/users/**")
                                     .access(this::isSelf);
 
+
                     //************* Authorizing Requests for accessing Products ***************//
 
                     // POST Request to add Products
@@ -110,6 +111,30 @@ public class SpringSecurityConfig {
 
                     // DELETE Request to delete a Category
                     authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/categories/**").hasAuthority("ROLE_ADMIN");
+
+
+                    //************* Authorizing Requests for accessing Orders ***************//
+
+                    // POST Request to place an Order
+                    authorize.requestMatchers(HttpMethod.POST, "api/e-com-cart/orders/place-order").hasAnyAuthority("ROLE_ADMIN", "ROLE_CUSTOMER");
+
+                    // GET Request to get all placed Orders
+                    authorize.requestMatchers(HttpMethod.GET, "api/e-com-cart/orders").hasAuthority("ROLE_ADMIN");
+
+                    // GET Request to get an Order placed by a Customer/Admin by Order ID
+                    authorize.requestMatchers(HttpMethod.GET,  "/api/e-com-cart/orders/**").hasAuthority("ROLE_ADMIN");
+
+                    // PUT Request to update Order Status
+                    authorize.requestMatchers(HttpMethod.PUT, "/api/e-com-cart/orders/**").hasAuthority("ROLE_ADMIN");
+
+                    // DELETE Request to delete an Order once it is delivered
+                    authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/orders/**").hasAuthority("ROLE_ADMIN");
+
+
+                    //************* Authorizing Requests for accessing Razorpay Payments ***************//
+
+                    // POST Request to create payment order for Razorpay payment
+                    authorize.requestMatchers(HttpMethod.POST, "/api/e-com-cart/payments/razorpay/create-order").hasAnyAuthority("ROLE_ADMIN", "ROLE_CUSTOMER");
 
                     authorize.anyRequest().authenticated();
                 })
