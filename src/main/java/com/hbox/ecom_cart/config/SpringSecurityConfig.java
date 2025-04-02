@@ -30,7 +30,7 @@ import java.util.function.Supplier;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @AllArgsConstructor
 public class SpringSecurityConfig {
 
@@ -53,6 +53,7 @@ public class SpringSecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint authenticationEntryPoint,
                                             CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
 
+        System.out.println("SecurityFilterChain is being initialized...");
         http.csrf().disable()
                 .authorizeHttpRequests((authorize) ->
                 {
@@ -136,6 +137,25 @@ public class SpringSecurityConfig {
                     // POST Request to create payment order for Razorpay payment
                     authorize.requestMatchers(HttpMethod.POST, "/api/e-com-cart/payments/razorpay/create-order").hasAnyAuthority("ROLE_ADMIN", "ROLE_CUSTOMER");
 
+
+                    //************* Authorizing Requests for accessing Customers ***************//
+
+                    // POST Request to create a Customer Profile by userId
+                    authorize.requestMatchers(HttpMethod.POST, "/api/e-com-cart/profiles/**").access(this::isSelf);
+
+                    // GET Request to get all the customer profiles
+                    authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/profiles").hasAuthority("ROLE_ADMIN");
+
+                    // GET Request to get a Customer's profile by userId
+                    authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/profiles/**").access(this::isAdminOrSelf);
+
+                    // PUT Request to update a customer's profile by the logged in customer only
+                    authorize.requestMatchers(HttpMethod.PUT, "/api/e-com-cart/profiles/**").access(this::isSelf);
+
+                    // DELETE Request to delete a customer's profile
+                    authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/profiles/**").access(this::isAdminOrSelf);
+
+
                     authorize.anyRequest().authenticated();
                 })
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
@@ -217,6 +237,7 @@ public class SpringSecurityConfig {
 
     private Long getRequestedUserIdFromRequestURI(String uriPath)
     {
+
         return Long.parseLong(uriPath.split("/")[4]);
     }
 
