@@ -4,6 +4,7 @@ import com.hbox.ecom_cart.dto.*;
 import com.hbox.ecom_cart.entity.*;
 import com.hbox.ecom_cart.exception.EcomCartException;
 import com.hbox.ecom_cart.repositoty.*;
+import com.hbox.ecom_cart.service.CustomerProfileService;
 import com.hbox.ecom_cart.service.InventoryService;
 import com.hbox.ecom_cart.service.OrderService;
 import lombok.AllArgsConstructor;
@@ -29,14 +30,20 @@ public class OrderServiceImpl implements OrderService {
     private ProductRepository productRepository;
     private InventoryService inventoryService;
     private RazorpayService razorpayService;
+    private CustomerProfileRespository customerProfileRespository;
 
 
     @Override
     public OrderDto placeOrder(OrderDto orderDto) {
-        User user = userRepository.findById(orderDto.getUser().getId()).orElseThrow(() ->
+        User user = userRepository.findById(orderDto.getUserDto().getId()).orElseThrow(() ->
                 new EcomCartException(HttpStatus.BAD_REQUEST, "User not found"));
+        CustomerProfile customer = customerProfileRespository.findByUserId(user.getId());
+        if(customer == null) {
+            throw new EcomCartException(HttpStatus.BAD_REQUEST, "Customer Profile does not exist! Need to create a profile");
+        }
         Order order = new Order();
         order.setUser(user);
+        order.setCustomerProfile(customer);
         order.setOrderDate(LocalDateTime.now());
 
         List<OrderItem> orderItems = new ArrayList<>();
@@ -128,7 +135,12 @@ public class OrderServiceImpl implements OrderService {
     private OrderDto mapOrderToDto(Order order) {
         OrderDto orderDto = new OrderDto();
         orderDto.setId(order.getId());
-        orderDto.setUser(order.getUser());
+        User user = userRepository.findById(order.getUser().getId()).orElseThrow(() -> new EcomCartException(HttpStatus.BAD_REQUEST, "User not found"));
+
+        orderDto.setUserDto(modelMapper.map(user, UserDto.class));
+        CustomerProfile customer = customerProfileRespository.findById(order.getCustomerProfile().getId()).orElseThrow(() -> new EcomCartException(HttpStatus.BAD_REQUEST, "Customer Profile not found"));
+
+        orderDto.setCustomerProfileDto(modelMapper.map(customer, CustomerProfileDto.class));
         orderDto.setOrderDate(order.getOrderDate());
 
         List<OrderItemDto> orderItems = order.getOrderItems().stream().map((orderItem) -> {

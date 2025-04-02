@@ -155,6 +155,10 @@ public class SpringSecurityConfig {
                     // DELETE Request to delete a customer's profile
                     authorize.requestMatchers(HttpMethod.DELETE, "/api/e-com-cart/profiles/**").access(this::isAdminOrSelf);
 
+                    //************* Authorizing Requests for accessing Order History ***************//
+
+                    // GET Request to access all orders placed by a customer using customer ID
+                    authorize.requestMatchers(HttpMethod.POST, "/api/e-com-cart/order-history/**").access(this::isAdminOrSelf);
 
                     authorize.anyRequest().authenticated();
                 })

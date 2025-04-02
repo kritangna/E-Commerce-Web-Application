@@ -1,7 +1,5 @@
 package com.hbox.ecom_cart.dto;
 
-
-import com.hbox.ecom_cart.entity.OrderItem;
 import com.hbox.ecom_cart.entity.OrderStatus;
 import com.hbox.ecom_cart.entity.User;
 import lombok.AllArgsConstructor;
@@ -19,7 +17,8 @@ import java.util.List;
 public class OrderDto {
 
     private Long id;
-    private User user;
+    private UserDto userDto;
+    private CustomerProfileDto customerProfileDto;
     private LocalDateTime orderDate;
     private OrderStatus orderStatus;
     private List<OrderItemDto> orderItems;

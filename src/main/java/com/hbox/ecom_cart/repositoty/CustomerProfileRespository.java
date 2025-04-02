@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CustomerProfileRespository extends JpaRepository<CustomerProfile, Long> {
 
     CustomerProfile findByUserId(Long UserId);
+  //  CustomerProfile findByCustomerProfileId(Long customerId);
 }

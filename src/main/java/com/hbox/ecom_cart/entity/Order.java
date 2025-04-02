@@ -25,6 +25,10 @@ public class Order {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "customer_profile_id")
+    private CustomerProfile customerProfile;
+
     private LocalDateTime orderDate;
 
     @Enumerated(EnumType.STRING)
