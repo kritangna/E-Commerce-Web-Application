@@ -30,11 +30,12 @@ public class EcomCartApplication {
 //		new SecureRandom().nextBytes(key);
 //		String secretKey = Base64.getEncoder().encodeToString(key);
 //		System.out.println("Generated JWT Secret Key: " + secretKey);
-		ConfigurableApplicationContext applicationContext = SpringApplication.run(EcomCartApplication.class, args);
-		String[] list = applicationContext.getBeanDefinitionNames();
-		for (String beanName : list) {
-			System.out.println(beanName);
-		}
+		SpringApplication.run(EcomCartApplication.class, args);
+//		ConfigurableApplicationContext applicationContext = SpringApplication.run(EcomCartApplication.class, args);
+//		String[] list = applicationContext.getBeanDefinitionNames();
+//		for (String beanName : list) {
+//			System.out.println(beanName);
+//		}
 	}
 
 

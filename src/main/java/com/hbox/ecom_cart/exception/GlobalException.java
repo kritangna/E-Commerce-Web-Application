@@ -33,6 +33,8 @@ public class GlobalException {
 
             case NOT_FOUND -> new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
 
+            case CONFLICT -> new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
+
             default -> new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
         };
     }
