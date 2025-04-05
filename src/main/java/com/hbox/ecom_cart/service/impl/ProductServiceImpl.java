@@ -8,14 +8,19 @@ import com.hbox.ecom_cart.exception.EcomCartException;
 import com.hbox.ecom_cart.repositoty.CategoryRepository;
 import com.hbox.ecom_cart.repositoty.ProductRepository;
 import com.hbox.ecom_cart.service.ProductService;
+
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 @AllArgsConstructor
 @Service
@@ -34,6 +39,7 @@ public class ProductServiceImpl implements ProductService {
         return getProductWithCategory(modelMapper.map(savedProduct, ProductDto.class));
     }
 
+    @CacheEvict(value = "products", key = "#id") // Invalidates cache in case of an update
     @Override
     public ProductDto updateProduct(Long id, ProductDto productDto) {
         Product existingProduct = productRepository.findById(id).orElseThrow(() -> new EcomCartException(HttpStatus.BAD_REQUEST, "Product not found"));
@@ -62,19 +68,14 @@ public class ProductServiceImpl implements ProductService {
         return getProductWithCategory(modelMapper.map(savedProduct, ProductDto.class));
     }
 
+    @Cacheable(value = "products", key = "#id")
     @Override
     public ProductDto getProductById(Long id) {
+        System.out.println("Fetching product from the db");
         Product existingProduct = productRepository.findById(id).orElseThrow(() -> new EcomCartException(HttpStatus.BAD_REQUEST, "Product not found"));
         Category category = loadCategory(modelMapper.map(existingProduct, ProductDto.class));
         return getProductWithCategory(modelMapper.map(existingProduct, ProductDto.class));
     }
-
-//    @Override
-//    public ProductDto getProductByName(String name) {
-//        List<Product> product = productRepository.findAll().stream().filter(p -> p.getProductName().equals(name)).collect(Collectors.toList());
-//
-//        return null;
-//    }
 
     @Override
     public List<ProductDto> getAllProducts() {
@@ -83,8 +84,16 @@ public class ProductServiceImpl implements ProductService {
         for(Product product : products) {
             productDtos.add(getProductWithCategory(modelMapper.map(product, ProductDto.class)));
         }
-
         return productDtos;
+    }
+
+    @Cacheable(value = "products", key = "#page + '-' + #size")
+    @Override
+    public Page<Product> getAllProductsInPage(int page, int size)
+    {
+        Pageable pageable = PageRequest.of(page, size);
+
+        return productRepository.findAll(pageable);
     }
 
     @Override
@@ -121,7 +130,7 @@ public class ProductServiceImpl implements ProductService {
         CategoryDto categoryDto = productDto.getCategoryDto();
         Category category = new Category();
         if(categoryDto != null) {
-            category = categoryRepository.findById(categoryDto.getId()).orElseThrow(() -> new EcomCartException(HttpStatus.BAD_REQUEST, "Category not found"));
+            category = categoryRepository.findById(categoryDto.getId()).orElseThrow(() -> new EcomCartException(HttpStatus.NOT_FOUND, "Category not found"));
         }
         else
         {

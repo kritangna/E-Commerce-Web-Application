@@ -175,6 +175,18 @@ public class SpringSecurityConfig {
                     // GET Request to retrieve the wishlist of a particular customer
                     authorize.requestMatchers(HttpMethod.GET, "/api/e-com-cart/wish-list/**").access(this::isAdminOrCustomer);
 
+                    //************* Authorizing Requests for making Razorpay Payments ***************//
+                    authorize.requestMatchers(HttpMethod.POST, "api/e-com-cart/razorpay-payments").permitAll();
+
+                    //************* Authorizing Requests for sending mails  ***************//
+
+                    // POST Request to send mail to the Customer from the application
+                    authorize.requestMatchers(HttpMethod.POST, "api/e-com-cart/email/send").hasAuthority("ROLE_ADMIN");
+
+                    //************* Authorizing Requests for testing Pagination  ***************//
+                    // GET Request to access the product list with specified number of products
+                    authorize.requestMatchers(HttpMethod.GET, "api/e-com-cart/products/product-list").hasAnyAuthority("ROLE_ADMIN", "ROLE_CUSTOMER");
+
                     authorize.anyRequest().authenticated();
                 })
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))

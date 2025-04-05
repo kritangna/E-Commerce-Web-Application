@@ -1,9 +1,11 @@
 package com.hbox.ecom_cart.controller;
 
 import com.hbox.ecom_cart.dto.ProductDto;
+import com.hbox.ecom_cart.entity.Product;
 import com.hbox.ecom_cart.service.ProductService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +47,11 @@ public class ProductController {
     public ResponseEntity<String> deleteProductById(@PathVariable("id") Long id) {
         productService.deleteProductById(id);
         return new ResponseEntity<>("Product deleted", HttpStatus.OK);
+    }
+
+    @GetMapping("product-list")
+    public Page<Product> getAllProductsInPage(@RequestParam int page, @RequestParam int size) {
+        return productService.getAllProductsInPage(page, size);
     }
 
 }
