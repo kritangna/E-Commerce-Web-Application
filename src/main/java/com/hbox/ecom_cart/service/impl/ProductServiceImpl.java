@@ -87,6 +87,7 @@ public class ProductServiceImpl implements ProductService {
         return productDtos;
     }
 
+    // Using Caching technique to GET a certain number of products in 1 page
     @Cacheable(value = "products", key = "#page + '-' + #size")
     @Override
     public Page<Product> getAllProductsInPage(int page, int size)

@@ -22,6 +22,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
 
+        System.out.println("********** CustomAccessDeniedHandler is being initialized **********");
         // Create error details
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),

@@ -11,6 +11,7 @@ public class RedisonConfig {
     @Bean
     public RedissonClient redissonClient()
     {
+
         return Redisson.create();
     }
 }

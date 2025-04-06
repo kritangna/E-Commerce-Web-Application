@@ -14,6 +14,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,8 +66,14 @@ public class WishListServiceImpl implements WishListService {
     public List<ProductDto> getWishListByCustomerId(Long customerId) {
         CustomerProfile customer = customerProfileRespository.findById(customerId).orElseThrow(() -> new EcomCartException(HttpStatus.BAD_REQUEST,"Customer Profile Not Found"));
         List<WishList> wishLists = wishListRepository.findByCustomerProfileId(customerId);
-        List<ProductDto> products = wishLists.stream().map(wishList -> modelMapper.map(wishList, ProductDto.class)).collect(Collectors.toList());
-
+        // List<ProductDto> products = wishLists.stream().map(wishList -> modelMapper.map(wishList, ProductDto.class)).collect(Collectors.toList());
+        List<ProductDto> products = new ArrayList<>();
+        for(WishList wishList : wishLists)
+        {
+            Product product = wishList.getProduct();
+            ProductDto productDto = mapProductToDto(product);
+            products.add(productDto);
+        }
         return products;
     }
 
