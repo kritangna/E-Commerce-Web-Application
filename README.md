@@ -2,22 +2,22 @@
 Building an E-Commerce Web Application using Java, Spring Boot, Hibernate, Spring Security, PostgreSQL, Redis
 Below are the requirements:
 
-#### **1 User Management**
+#### **1 - User Management**
 - User registration, authentication, and profile management.
 - Password encryption and secure authentication mechanisms (e.g., JWT).
 - Role-based access control for different user types (admin, customer).
 
-#### **2 Product Management**
+#### **2 - Product Management**
 - CRUD operations for product listings (Create, Read, Update, Delete).
 - Inventory management to track stock levels.
 - Categorization of products for easy navigation.
 
-#### **3 Order Processing**
+#### **3 - Order Processing**
 - Order placement and management functionality.
 - Integration with payment gateways for secure transaction processing.
 - Order tracking and status updates.
 
-#### **4 Customer Management**
+#### **4 - Customer Management**
 - Management of customer profiles, order history, and wish lists.
 - Communication tools for customer support (e.g., email notifications).
 
